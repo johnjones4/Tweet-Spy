@@ -1,0 +1,12 @@
+{
+  "db_file": "./database.sqlite3",
+  "twitter": {
+    "consumerKey": "",
+    "consumerSecret": "",
+    "token": "",
+    "tokenSecret": "",
+    "rootHandle": "",
+    "crawlType": "friends",
+    "crawlDepth": 1
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "tweet-spy",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/johnjones4/Tweet-Spy.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/johnjones4/Tweet-Spy/issues"
+  },
+  "homepage": "https://github.com/johnjones4/Tweet-Spy#readme",
+  "dependencies": {
+    "async": "^2.0.1",
+    "expand-url": "^0.1.3",
+    "jsdom": "^9.4.1",
+    "knex": "^0.11.9",
+    "request": "^2.74.0",
+    "sqlite3": "^3.1.4"
+  }
+}
