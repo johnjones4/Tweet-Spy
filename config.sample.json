@@ -5,8 +5,6 @@
     "consumerSecret": "",
     "token": "",
     "tokenSecret": "",
-    "rootHandle": "",
-    "crawlType": "friends",
-    "crawlDepth": 1
+    "rootHandle": ""
   }
 }

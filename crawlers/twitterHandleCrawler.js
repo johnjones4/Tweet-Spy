@@ -6,13 +6,15 @@ var querystring = require('querystring');
 var Handle = require('../models/handle');
 
 class TwitterHandleCrawler {
-  constructor(config,handle) {
+  constructor(config,handle,crawlType,depth) {
     this.config = config;
     this.handle = handle;
+    this.crawlType = crawlType;
+    this.depth = depth;
   }
 
   crawl(done) {
-    this._crawl(this.handle,this.config.twitter.crawlDepth,done);
+    this._crawl(this.handle,this.depth,done);
   }
 
   _crawl(handle,depth,done) {
@@ -21,8 +23,8 @@ class TwitterHandleCrawler {
       function(next) {
         var users = [];
         var makeRequest = function(cursor) {
-          console.log('Get ' + _this.config.twitter.crawlType + ' of ' + handle + ' (' + cursor + ')');
-          var url = 'https://api.twitter.com/1.1/' + _this.config.twitter.crawlType + '/list.json?' + querystring.stringify({
+          console.log('Get ' + _this.crawlType + ' of ' + handle + ' (' + cursor + ')');
+          var url = 'https://api.twitter.com/1.1/' + _this.crawlType + '/list.json?' + querystring.stringify({
             'screen_name': handle,
             'count': 200,
             'cursor': cursor
@@ -54,7 +56,7 @@ class TwitterHandleCrawler {
         if (users) {
           next(null,users
             .map(function(user) {
-              console.log('Found ' + _this.config.twitter.crawlType + ' ' + user.screen_name);
+              console.log('Found ' + _this.crawlType + ' ' + user.screen_name);
               return new Handle({
                 'handle': user.screen_name,
                 'twitterId': user.id,
@@ -72,32 +74,33 @@ class TwitterHandleCrawler {
         }
       },
       function(handles,next) {
-        async.filterSeries(
-          handles,
-          function(handle,next1) {
-            async.waterfall([
-              function(next2) {
-                handle.isDuplicateInDatabase(next2);
-              },
-              function(dupe,next2) {
-                if (!dupe) {
-                  handle.correctTwitterURL(function(err) {
-                    console.log('Updated URL for ' + _this.config.twitter.crawlType + ' ' + handle.handle);
-                    next2(err);
+        async.series(
+          handles.map(function(handle,i) {
+            return function(next1) {
+              async.waterfall([
+                function(next2) {
+                  handle.isDuplicateInDatabase(next2);
+                },
+                function(dupe,next2) {
+                  if (!dupe) {
+                    handle.correctTwitterURL(function(err) {
+                      console.log('Updated URL for ' + _this.crawlType + ' ' + handle.handle);
+                      next2(err);
+                    });
+                  } else {
+                    console.log(_this.crawlType + ' ' + handle.handle + ' is already in database.');
+                    next1(null,handle);
+                  }
+                },
+                function(next2) {
+                  handle.save(function(err) {
+                    console.log('Saved ' + _this.crawlType + ' ' + handle.handle + ' (Index: ' + i + '/' + handles.length + ', depth: ' + depth + ')');
+                    next2(err,handle);
                   });
-                } else {
-                  console.log(_this.config.twitter.crawlType + ' ' + handle.handle + ' is already in database.');
-                  next1(false);
                 }
-              },
-              function(next2) {
-                handle.save(function(err) {
-                  console.log('Saved ' + _this.config.twitter.crawlType + ' ' + handle.handle);
-                  next2(err,true);
-                });
-              }
-            ],next1);
-          },
+              ],next1);
+            };
+          }),
           next
         );
       }
