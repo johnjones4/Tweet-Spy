@@ -182,7 +182,7 @@ Handle.findCompleteProfiles = function(locations,done) {
     .andWhere(function() {
       var _this = this;
       locations.forEach(function(location) {
-        _this.where('location','like','%' + location + '%');
+        _this.orWhere('location','like','%' + location + '%');
       });
     })
     .asCallback(function(err,rows) {
