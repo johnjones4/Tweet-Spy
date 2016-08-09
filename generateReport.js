@@ -26,7 +26,7 @@ async.series(
     } else {
       async.waterfall([
         function(next) {
-          Handle.findCompleteProfiles(confg.report.locations,next);
+          Handle.findCompleteProfiles(config.report.locations,next);
         },
         function(handles,next) {
           stringify(handles,next)
