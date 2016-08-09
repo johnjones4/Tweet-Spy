@@ -174,6 +174,30 @@ Handle.findUnprocessedHandles = function(type,done) {
     });
 };
 
+Handle.findCompleteProfiles = function(locations,done) {
+  Handle.knex
+    .select(Handle.selectColumns)
+    .from(Handle.tableName)
+    .whereNotNull('email')
+    .andWhere(function() {
+      var _this = this;
+      locations.forEach(function(location) {
+        _this.where('location','like','%' + location + '%');
+      });
+    })
+    .asCallback(function(err,rows) {
+      if (err) {
+        done(err);
+      } else if (rows) {
+        done(null,rows.map(function(row) {
+          return Handle.objectFromSQLRow(row);
+        }));
+      } else {
+        done();
+      }
+    });
+}
+
 Handle.objectFromSQLRow = function(sqlRow) {
   return new Handle({
     'id': sqlRow.id,
