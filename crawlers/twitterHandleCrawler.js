@@ -147,12 +147,15 @@ class TwitterHandleCrawler {
       ],next);
     },10);
     var fillQueue = function(err) {
+      console.log('Refilling handle queue');
       Handle.findUnprocessedHandles(_this.crawlType,function(err,handles) {
         if (err) {
           done(err);
         } else if (handles && handles.length > 0) {
+          console.log(handles.length + ' handles queued');
           handles.forEach(function(handle) {
             queue.push(handle,function(err) {
+              console.log('Handle ' + handle.handle + ' done processing');
               if (err) {
                 console.error(err);
               }
@@ -160,6 +163,7 @@ class TwitterHandleCrawler {
           });
           queue.drain(fillQueue);
         } else {
+          console.log('No handles queued');
           done();
         }
       });

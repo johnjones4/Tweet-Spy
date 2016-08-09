@@ -107,12 +107,15 @@ class SiteEmailCrawler {
       });
     },10);
     var fillQueue = function(err) {
+      console.log('Refilling page queue');
       Page.findUncrawledPages(function(err,pages) {
         if (err) {
           done(err);
         } else if (pages && pages.length > 0) {
+          console.log(pages.length + ' pages queued');
           pages.forEach(function(page) {
             queue.push(page,function(err) {
+              console.log('Page ' + page.url + ' done processing');
               if (err) {
                 console.error(err);
               }
@@ -120,6 +123,7 @@ class SiteEmailCrawler {
           });
           queue.drain(fillQueue);
         } else {
+          console.log('No pages queued');
           done();
         }
       });
