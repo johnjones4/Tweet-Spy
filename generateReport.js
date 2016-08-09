@@ -29,7 +29,7 @@ async.series(
           Handle.findCompleteProfiles(config.report.locations,next);
         },
         function(handles,next) {
-          stringify(handles,next)
+          stringify({'header':true},handles,next)
         }
       ],function(err,csvData) {
         if (err) {
