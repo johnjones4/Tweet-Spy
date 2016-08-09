@@ -5,7 +5,7 @@ var urlExpander = require('expand-url');
 class Handle {
   constructor(props) {
     var _this = this;
-    ['id','handle','twitterId','follows','followers','name','image','url','location','email','created','updated'].forEach(function(prop) {
+    ['id','handle','twitterId','follows','followers','name','image','url','location','email','created','updated','friendsDepth','friendsProcessed','followersDepth','followersProcessed'].forEach(function(prop) {
       _this[prop] = props[prop] ? props[prop] : null;
     });
     if (!_this.created) {
@@ -14,15 +14,27 @@ class Handle {
     if (!_this.updated) {
       _this.updated = new Date();
     }
+    if (!_this.followersProcessed) {
+      _this.followersProcessed = false;
+    }
+    if (!_this.friendsProcessed) {
+      _this.friendsProcessed = false;
+    }
+    if (!_this.followersDepth) {
+      _this.followersDepth = 0;
+    }
+    if (!_this.friendsDepth) {
+      _this.friendsDepth = 0;
+    }
   }
 
-  isDuplicateInDatabase(done) {
+  findDuplicateInDatabase(done) {
     Handle.knex
       .select(Handle.selectColumns)
       .from(Handle.tableName)
       .where({'handle':this.handle})
       .asCallback(function(err,rows) {
-        done(err,(rows && rows.length > 0));
+        done(err,(rows && rows.length > 0) ? Handle.objectFromSQLRow(rows[0]) : null);
       });
   }
 
@@ -53,7 +65,11 @@ class Handle {
       'location': _this.location,
       'email': _this.email,
       'created_at': _this.created,
-      'updated_at': _this.updated
+      'updated_at': _this.updated,
+      'friends_depth': _this.friendsDepth,
+      'friends_processed': _this.friendsProcessed,
+      'followers_depth': _this.followersDepth,
+      'followers_processed': _this.followersProcessed
     };
 
     if (this.id) {
@@ -85,7 +101,7 @@ class Handle {
 
 Handle.tableName = 'handle';
 
-Handle.selectColumns = ['id','handle','twitter_id','follows','followers','name','image','url','location','email','created','updated'];
+Handle.selectColumns = ['id','handle','twitter_id','follows','followers','name','image','url','location','email','created','updated','friends_depth','friends_processed','followers_depth','followers_processed'];
 
 Handle.findHandleByHandleName = function(handle,done) {
   Handle.knex
@@ -137,6 +153,27 @@ Handle.findHandleByHandlesWithURLs = function(done) {
     });
 };
 
+Handle.findUnprocessedHandles = function(type,done) {
+  var params = [];
+  var key = type + '_processed';
+  params[key] = false
+  Handle.knex
+    .select(Handle.selectColumns)
+    .from(Handle.tableName)
+    .where(params)
+    .asCallback(function(err,rows) {
+      if (err) {
+        done(err);
+      } else if (rows) {
+        done(null,rows.map(function(row) {
+          return Handle.objectFromSQLRow(row);
+        }));
+      } else {
+        done();
+      }
+    });
+};
+
 Handle.objectFromSQLRow = function(sqlRow) {
   return new Handle({
     'id': sqlRow.id,
@@ -150,7 +187,11 @@ Handle.objectFromSQLRow = function(sqlRow) {
     'location': sqlRow.location,
     'email': sqlRow.email,
     'created': sqlRow.created_at,
-    'updated': sqlRow.updated_at
+    'updated': sqlRow.updated_at,
+    'friendsDepth': sqlRow.friends_depth,
+    'friendsProcessed': sqlRow.friends_processed,
+    'followersDepth': sqlRow.followers_depth,
+    'followersProcessed': sqlRow.followers_processed
   });
 };
 
@@ -167,6 +208,10 @@ Handle.buildTable = function(done) {
         table.integer('twitter_id').notNullable().unique().unsigned().index();
         table.integer('follows').unsigned();
         table.integer('followers').unsigned();
+        table.integer('friends_depth').notNullable().unsigned();
+        table.boolean('friends_processed');
+        table.integer('followers_depth').notNullable().unsigned();
+        table.boolean('followers_processed');
         table.string('name',255);
         table.string('image',255);
         table.string('url',255);

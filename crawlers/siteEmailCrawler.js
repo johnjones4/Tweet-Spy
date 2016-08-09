@@ -107,7 +107,7 @@ class SiteEmailCrawler {
       });
     },10);
     var fillQueue = function(err) {
-      Page.fundUncrawledPages(function(err,pages) {
+      Page.findUncrawledPages(function(err,pages) {
         if (err) {
           done(err);
         } else if (pages && pages.length > 0) {

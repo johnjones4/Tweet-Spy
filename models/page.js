@@ -71,7 +71,7 @@ Page.tableName = 'page';
 
 Page.selectColumns = ['id','url','crawled','handle','created_at','updated_at'];
 
-Page.fundUncrawledPages = function(done) {
+Page.findUncrawledPages = function(done) {
   Page.knex
     .select(Page.selectColumns)
     .from(Page.tableName)

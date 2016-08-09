@@ -14,11 +14,20 @@ class TwitterHandleCrawler {
   }
 
   crawl(done) {
-    this._crawl(this.handle,this.depth,done);
+    var _this = this;
+    async.waterfall([
+      function(next) {
+        _this.enqueueHandles(_this.handle,_this.depth,next);
+      },
+      function(next) {
+        _this.beginDequeue(next);
+      }
+    ],done);
   }
 
-  _crawl(handle,depth,done) {
+  enqueueHandles(handle,atDepth,done) {
     var _this = this;
+    var depthKey = _this.crawlType + 'Depth';
     async.waterfall([
       function(next) {
         var users = [];
@@ -57,7 +66,7 @@ class TwitterHandleCrawler {
           next(null,users
             .map(function(user) {
               console.log('Found ' + _this.crawlType + ' ' + user.screen_name);
-              return new Handle({
+              var handle = new Handle({
                 'handle': user.screen_name,
                 'twitterId': user.id,
                 'follows': user.friends_count != null ? user.friends_count : 0,
@@ -67,6 +76,8 @@ class TwitterHandleCrawler {
                 'url': user.url,
                 'location': user.location
               });
+              handle[depthKey] = atDepth;
+              return handle;
             })
           );
         } else {
@@ -75,51 +86,85 @@ class TwitterHandleCrawler {
       },
       function(handles,next) {
         async.series(
-          handles.map(function(handle,i) {
+          handles.map(function(handle) {
             return function(next1) {
-              async.waterfall([
-                function(next2) {
-                  handle.isDuplicateInDatabase(next2);
-                },
-                function(dupe,next2) {
-                  if (!dupe) {
-                    handle.correctTwitterURL(function(err) {
-                      console.log('Updated URL for ' + _this.crawlType + ' ' + handle.handle);
-                      next2(err);
-                    });
-                  } else {
-                    console.log(_this.crawlType + ' ' + handle.handle + ' is already in database.');
-                    next1(null,handle);
-                  }
-                },
-                function(next2) {
-                  handle.save(function(err) {
-                    console.log('Saved ' + _this.crawlType + ' ' + handle.handle + ' (Index: ' + i + '/' + handles.length + ', depth: ' + depth + ')');
-                    next2(err,handle);
+              handle.findDuplicateInDatabase(function(err,dupeHandle) {
+                if (dupeHandle) {
+                  console.log(_this.crawlType + ' ' + handle.handle + ' is already in database.');
+                  dupeHandle[depthKey] = atDepth;
+                  dupeHandle.save(function(err) {
+                    console.log(_this.crawlType + ' ' + dupeHandle.handle + ' updated in database.');
+                    next1(err);
                   });
+                } else {
+                  handle.save(function(err) {
+                    console.log(_this.crawlType + ' ' + handle.handle + ' saved to database.');
+                    next1(err);
+                  })
                 }
-              ],next1);
-            };
+              });
+            }
           }),
           next
         );
       }
-    ],function(err,handles) {
-      if (err) {
-        done(err);
-      } else if (handles && depth > 0) {
-        async.series(
-          handles.map(function(handle) {
-            return function(next) {
-              _this._crawl(handle.handle,depth-1,next);
-            }
-          }),
-          done
-        );
-      } else {
-        done();
-      }
+    ],function(err) {
+      done(err);
     });
+  }
+
+  beginDequeue(done) {
+    var _this = this;
+    var queue = async.queue(function(handle,next) {
+      var depthKey = _this.crawlType + 'Depth';
+      var depthString = ' ' + handle.handle + ' (Type: ' + _this.crawlType + ', Depth: ' + handle[depthKey] + ')';
+      console.log('Dequeued ' + depthString);
+      async.waterfall([
+        function(next1) {
+          handle.correctTwitterURL(function(err) {
+            console.log('Updated URL for ' + depthString);
+            next1(err);
+          });
+        },
+        function(next1) {
+          if (handle[depthKey] > 0) {
+            _this.enqueueHandles(handle.handle,handle[depthKey] - 1,function(err) {
+              console.log('Enqueued connections for ' + depthString);
+              next1(err);
+            });
+          } else {
+            next1();
+          }
+        },
+        function(next1) {
+          var key = _this.crawlType + 'Processed';
+          handle[key] = true;
+          handle.save(function(err) {
+            console.log('Saved ' + depthString);
+            next1(err);
+          })
+        }
+      ],next);
+    },10);
+    var fillQueue = function(err) {
+      Handle.findUnprocessedHandles(_this.crawlType,function(err,handles) {
+        if (err) {
+          done(err);
+        } else if (handles && handles.length > 0) {
+          handles.forEach(function(handle) {
+            queue.push(handle,function(err) {
+              if (err) {
+                console.error(err);
+              }
+            });
+          });
+          queue.drain(fillQueue);
+        } else {
+          done();
+        }
+      });
+    }
+    fillQueue();
   }
 }
 
