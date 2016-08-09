@@ -106,7 +106,7 @@ class SiteEmailCrawler {
         }
       });
     },10);
-    var fillQueue = function(err) {
+    queue.drain = function(err) {
       console.log('Refilling page queue');
       Page.findUncrawledPages(function(err,pages) {
         if (err) {
@@ -121,14 +121,13 @@ class SiteEmailCrawler {
               }
             });
           });
-          queue.drain(fillQueue);
         } else {
           console.log('No pages queued');
           done();
         }
       });
     }
-    fillQueue();
+    queue.drain();
   }
 
   crawURLForEmail(url,done) {
