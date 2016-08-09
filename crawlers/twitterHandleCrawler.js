@@ -91,11 +91,17 @@ class TwitterHandleCrawler {
               handle.findDuplicateInDatabase(function(err,dupeHandle) {
                 if (dupeHandle) {
                   console.log(_this.crawlType + ' ' + handle.handle + ' is already in database.');
-                  dupeHandle[depthKey] = atDepth;
-                  dupeHandle.save(function(err) {
-                    console.log(_this.crawlType + ' ' + dupeHandle.handle + ' updated in database.');
-                    next1(err);
-                  });
+                  if (atDepth > dupeHandle[depthKey]) {
+                    dupeHandle[depthKey] = atDepth;
+                    var processedKey = _this.crawlDepth + 'Processed';
+                    dupeHandle[processedKey] = false;
+                    dupeHandle.save(function(err) {
+                      console.log(_this.crawlType + ' ' + dupeHandle.handle + ' updated in database.');
+                      next1(err);
+                    });
+                  } else {
+                    next1();
+                  }
                 } else {
                   handle.save(function(err) {
                     console.log(_this.crawlType + ' ' + handle.handle + ' saved to database.');
@@ -146,7 +152,7 @@ class TwitterHandleCrawler {
         }
       ],next);
     },10);
-    var fillQueue = function(err) {
+    queue.drain = function(err) {
       console.log('Refilling handle queue');
       Handle.findUnprocessedHandles(_this.crawlType,function(err,handles) {
         if (err) {
@@ -161,14 +167,13 @@ class TwitterHandleCrawler {
               }
             });
           });
-          queue.drain(fillQueue);
         } else {
           console.log('No handles queued');
           done();
         }
       });
     }
-    fillQueue();
+    queue.drain();
   }
 }
 
