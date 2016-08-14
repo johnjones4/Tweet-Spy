@@ -6,23 +6,40 @@ var querystring = require('querystring');
 var Handle = require('../models/handle');
 
 class TwitterHandleCrawler {
-  constructor(config,handle,crawlType,depth) {
+  constructor(config,handles,crawlType,depth) {
     this.config = config;
-    this.handle = handle;
+    this.handles = handles;
     this.crawlType = crawlType;
     this.depth = depth;
+    this.requestQueue = [];
   }
 
   crawl(done) {
     var _this = this;
+    _this.interval = setInterval(function() {
+      if (_this.requestQueue.length > 0) {
+        var req = _this.requestQueue.shift();
+        request.get(req.options,req.callback);
+      }
+    },60000);
     async.waterfall([
       function(next) {
-        _this.enqueueHandles(_this.handle,_this.depth,next);
+        async.parallel(
+          _this.handles.map(function(handle) {
+            return function(next1) {
+              _this.enqueueHandles(handle,_this.depth,next1);
+            };
+          }),
+          next
+        )
       },
       function(next) {
         _this.beginDequeue(next);
       }
-    ],done);
+    ],function(err) {
+      clearInterval(_this.interval);
+      done(err);
+    });
   }
 
   enqueueHandles(handle,atDepth,done) {
@@ -44,7 +61,7 @@ class TwitterHandleCrawler {
             'token': _this.config.twitter.token,
             'token_secret': _this.config.twitter.tokenSecret
           };
-          request.get({'url':url, 'oauth':oauth, 'json': true}, function(err, response, body) {
+          _this.requestQueue.push({'options': {'url':url, 'oauth':oauth, 'json': true}, 'callback': function(err, response, body) {
             if (err) {
               next(err);
             } else {
@@ -57,7 +74,7 @@ class TwitterHandleCrawler {
                 next(null,users);
               }
             }
-          });
+          }});
         }
         makeRequest(-1);
       },
