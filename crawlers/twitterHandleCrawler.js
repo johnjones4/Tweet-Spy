@@ -69,11 +69,13 @@ class TwitterHandleCrawler {
             } else {
               if (body && body.users) {
                 users = users.concat(body.users);
-              }
-              if (body && body.next_cursor && body.next_cursor > 0) {
-                makeRequest(body.next_cursor);
+                if (body && body.next_cursor && body.next_cursor > 0) {
+                  makeRequest(body.next_cursor);
+                } else {
+                  next(null,users);
+                }
               } else {
-                next(null,users);
+                next(new Error(body))
               }
             }
           }});
