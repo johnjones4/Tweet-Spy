@@ -68,7 +68,7 @@ class TwitterHandleCrawler {
               next(err);
             } else {
               if (body && body.users) {
-                users = users.concat(body.users);
+                  users = users.concat(body.users);
                 if (body && body.next_cursor && body.next_cursor > 0) {
                   makeRequest(body.next_cursor);
                 } else {
