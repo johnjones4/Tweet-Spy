@@ -17,13 +17,11 @@ class TwitterHandleCrawler {
   crawl(done) {
     var _this = this;
     _this.interval = setInterval(function() {
-      for (var i = 0; i < 15; i++) {
-        if (_this.requestQueue.length > 0) {
-          var req = _this.requestQueue.shift();
-          request.get(req.options,req.callback);
-        }
+      if (_this.requestQueue.length > 0) {
+        var req = _this.requestQueue.shift();
+        request.get(req.options,req.callback);
       }
-    },900000);
+    },60000);
     async.waterfall([
       function(next) {
         async.parallel(
