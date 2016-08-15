@@ -5,12 +5,7 @@ var Page = require('./models/page');
 var TwitterHandleCrawler = require('./crawlers/twitterHandleCrawler');
 var SiteEmailCrawler = require('./crawlers/siteEmailCrawler');
 var stringify = require('csv-stringify');
-var knex = require('knex')({
-  'client': 'sqlite3',
-  'connection': {
-    'filename': config.db_file
-  }
-});
+var knex = require('knex')(config.knex);
 
 async.series(
   [Handle,Page].map(function(klass) {

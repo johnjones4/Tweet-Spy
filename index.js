@@ -4,12 +4,7 @@ var Handle = require('./models/handle');
 var Page = require('./models/page');
 var TwitterHandleCrawler = require('./crawlers/twitterHandleCrawler');
 var SiteEmailCrawler = require('./crawlers/siteEmailCrawler');
-var knex = require('knex')({
-  'client': 'sqlite3',
-  'connection': {
-    'filename': config.db_file
-  }
-});
+var knex = require('knex')(config.knex);
 
 async.series(
   [Handle,Page].map(function(klass) {
@@ -25,7 +20,7 @@ async.series(
     } else {
       async.waterfall([
         function(next) {
-          var crawler = new TwitterHandleCrawler(config,config.twitter.rootHandles,'friends',1);
+          var crawler = new TwitterHandleCrawler(config,config.twitter.rootHandles,'friends',0);
           crawler.crawl(next);
         },
         function(next) {

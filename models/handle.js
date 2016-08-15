@@ -101,7 +101,7 @@ class Handle {
 
 Handle.tableName = 'handle';
 
-Handle.selectColumns = ['id','handle','twitter_id','follows','followers','name','image','url','location','email','created','updated','friends_depth','friends_processed','followers_depth','followers_processed'];
+Handle.selectColumns = ['id','handle','twitter_id','follows','followers','name','image','url','location','email','created_at','updated_at','friends_depth','friends_processed','followers_depth','followers_processed'];
 
 Handle.findHandleByHandleName = function(handle,done) {
   Handle.knex

@@ -11,17 +11,10 @@ class TwitterHandleCrawler {
     this.handles = handles;
     this.crawlType = crawlType;
     this.depth = depth;
-    this.requestQueue = [];
   }
 
   crawl(done) {
     var _this = this;
-    _this.interval = setInterval(function() {
-      if (_this.requestQueue.length > 0) {
-        var req = _this.requestQueue.shift();
-        request.get(req.options,req.callback);
-      }
-    },65000);
     async.waterfall([
       function(next) {
         async.parallel(
@@ -37,7 +30,6 @@ class TwitterHandleCrawler {
         _this.beginDequeue(next);
       }
     ],function(err) {
-      clearInterval(_this.interval);
       done(err);
     });
   }
@@ -61,7 +53,7 @@ class TwitterHandleCrawler {
             'token': _this.config.twitter.token,
             'token_secret': _this.config.twitter.tokenSecret
           };
-          _this.requestQueue.push({'options': {'url':url, 'oauth':oauth, 'json': true}, 'callback': function(err, response, body) {
+          request.get({'url':url, 'oauth':oauth, 'json': true}, function(err, response, body) {
             if (err) {
               next(err);
             } else {
@@ -73,10 +65,13 @@ class TwitterHandleCrawler {
                   next(null,users);
                 }
               } else {
-                next(new Error(body))
+                console.log(body);
+                setTimeout(function() {
+                  makeRequest(cursor);
+                },900000);
               }
             }
-          }});
+          });
         }
         makeRequest(-1);
       },
@@ -108,7 +103,9 @@ class TwitterHandleCrawler {
           handles.map(function(handle) {
             return function(next1) {
               handle.findDuplicateInDatabase(function(err,dupeHandle) {
-                if (dupeHandle) {
+                if (err) {
+                  next1(err);
+                } else if (dupeHandle) {
                   console.log(_this.crawlType + ' ' + handle.handle + ' is already in database.');
                   if (atDepth > dupeHandle[depthKey]) {
                     dupeHandle[depthKey] = atDepth;
