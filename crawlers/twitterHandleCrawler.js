@@ -21,7 +21,7 @@ class TwitterHandleCrawler {
         var req = _this.requestQueue.shift();
         request.get(req.options,req.callback);
       }
-    },60000);
+    },65000);
     async.waterfall([
       function(next) {
         async.parallel(
@@ -182,7 +182,7 @@ class TwitterHandleCrawler {
             queue.push(handle,function(err) {
               console.log('Handle ' + handle.handle + ' done processing');
               if (err) {
-                console.error(err);
+                console.error(JSON.stringify(err,null,'  '));
               }
             });
           });
