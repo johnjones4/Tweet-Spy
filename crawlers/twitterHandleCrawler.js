@@ -44,8 +44,8 @@ class TwitterHandleCrawler {
           done(err);
         } else if (dupeHandle) {
           _this.logger.info(_this.crawlType + ' ' + handleInfo.handle.handle + ' is already in database.');
-          if (handleInfo.atDepth > dupeHandle[depthKey]) {
-            dupeHandle[depthKey] = handleInfo.atDepth;
+          if (handleInfo.atDepth > dupeHandle[handleInfo.depthKey]) {
+            dupeHandle[handleInfo.depthKey] = handleInfo.atDepth;
             var processedKey = _this.crawlDepth + 'Processed';
             dupeHandle[processedKey] = false;
             dupeHandle.save(function(err) {
@@ -133,10 +133,13 @@ class TwitterHandleCrawler {
         handles.forEach(function(handle) {
           var handleInfo = {
             'handle': handle,
-            'atDepth': atDepth
+            'atDepth': atDepth,
+            'depthKey': depthKey
           };
           _this.handleQueue.push(handleInfo,function(err) {
-            _this.logger.error(err);
+            if (err) {
+              _this.logger.error(err);
+            }
           })
         });
         next();
