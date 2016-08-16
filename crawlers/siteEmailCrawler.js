@@ -9,7 +9,8 @@ var jsdom = require("jsdom");
 var url = require('url');
 
 class SiteEmailCrawler {
-  constructor(config) {
+  constructor(logger,config) {
+    this.logger = logger;
     this.config = config;
   }
 
@@ -50,12 +51,12 @@ class SiteEmailCrawler {
   beginDequeue(done) {
     var _this = this;
     var queue = async.queue(function(page,next) {
-      console.log('Dequeued ' + page.url);
+      _this.logger.info('Dequeued ' + page.url);
       _this.crawURLForEmail(page.url,function(err,email) {
         if (err) {
           next(err);
         } else if (email) {
-          console.log('Found email on ' + page.url + ' (' + email + ')');
+          _this.logger.info('Found email on ' + page.url + ' (' + email + ')');
           async.waterfall([
             function(next1) {
               Handle.findHandleByID(page.handle,next1);
@@ -80,7 +81,7 @@ class SiteEmailCrawler {
             next(err);
           });
         } else {
-          console.log('No emails found on ' + page.url);
+          _this.logger.info('No emails found on ' + page.url);
           async.waterfall([
             function(next1) {
               page.crawled = true;
@@ -107,22 +108,22 @@ class SiteEmailCrawler {
       });
     },10);
     queue.drain = function(err) {
-      console.log('Refilling page queue');
+      _this.logger.info('Refilling page queue');
       Page.findUncrawledPages(function(err,pages) {
         if (err) {
           done(err);
         } else if (pages && pages.length > 0) {
-          console.log(pages.length + ' pages queued');
+          _this.logger.info(pages.length + ' pages queued');
           pages.forEach(function(page) {
             queue.push(page,function(err) {
-              console.log('Page ' + page.url + ' done processing');
+              _this.logger.info('Page ' + page.url + ' done processing');
               if (err) {
-                console.error(err);
+                _this.logger.error(err);
               }
             });
           });
         } else {
-          console.log('No pages queued');
+          _this.logger.info('No pages queued');
           done();
         }
       });
@@ -131,6 +132,7 @@ class SiteEmailCrawler {
   }
 
   crawURLForEmail(url,done) {
+    var _this = this;
     request(url,function(err,response,body) {
       if (err) {
         done(err);
@@ -153,6 +155,7 @@ class SiteEmailCrawler {
   }
 
   crawURLForSameDomainURLs(pageURL,done) {
+    var _this = this;
     var pageURLObj = url.parse(pageURL);
     jsdom.env(
       pageURL,
@@ -175,6 +178,7 @@ class SiteEmailCrawler {
   }
 
   enqueuePages(pages,done) {
+    var _this = this;
     async.series(
       pages.map(function(page) {
         return function(next) {
@@ -184,7 +188,7 @@ class SiteEmailCrawler {
             },
             function(dupe,next1) {
               if (!dupe) {
-                console.log('Enqueued ' + page.url);
+                _this.logger.info('Enqueued ' + page.url);
                 page.save(next1);
               } else {
                 next1();

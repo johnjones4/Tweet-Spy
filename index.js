@@ -5,6 +5,13 @@ var Page = require('./models/page');
 var TwitterHandleCrawler = require('./crawlers/twitterHandleCrawler');
 var SiteEmailCrawler = require('./crawlers/siteEmailCrawler');
 var knex = require('knex')(config.knex);
+var winston = require('winston');
+
+var logger = new (winston.Logger)({
+  'transports': [
+    new (winston.transports.Console)({'timestamp':true})
+  ]
+});
 
 async.series(
   [Handle,Page].map(function(klass) {
@@ -20,15 +27,15 @@ async.series(
     } else {
       async.waterfall([
         function(next) {
-          var crawler = new TwitterHandleCrawler(config,config.twitter.rootHandles,'friends',0);
+          var crawler = new TwitterHandleCrawler(logger,config,config.twitter.rootHandles,'friends',0);
           crawler.crawl(next);
         },
         function(next) {
-          var crawler = new TwitterHandleCrawler(config,config.twitter.rootHandles,'followers',0);
+          var crawler = new TwitterHandleCrawler(logger,config,config.twitter.rootHandles,'followers',0);
           crawler.crawl(next);
         },
         function(next) {
-          var crawler = new SiteEmailCrawler(config);
+          var crawler = new SiteEmailCrawler(logger,config);
           crawler.crawl(next);
         }
       ],function(err) {
