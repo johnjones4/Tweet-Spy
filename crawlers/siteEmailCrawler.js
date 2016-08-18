@@ -16,7 +16,7 @@ class SiteEmailCrawler {
 
   crawl(done) {
     var _this = this;
-    async.waterfall([
+    async.parallel([
       function(next) {
         _this.enqueueHandleURLs(next);
       },
