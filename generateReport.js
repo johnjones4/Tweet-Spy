@@ -21,17 +21,20 @@ async.series(
     } else {
       async.waterfall([
         function(next) {
-          Handle.findCompleteProfiles(config.report.locations,next);
+          var query = Handle.findCompleteProfiles(config.report.locations,next);
+          console.log(query)
         },
         function(handles,next) {
           stringify(handles,{'header':true},next)
+        },
+        function(csv,next) {
+          fs.writeFile(config.report.file,csv,next);
         }
       ],function(err,csvData) {
         if (err) {
           console.error(err);
           process.exit(-1);
         } else {
-          console.log(csvData);
           process.exit(0);
         }
       });

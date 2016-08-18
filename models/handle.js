@@ -175,7 +175,7 @@ Handle.findUnprocessedHandles = function(type,done) {
 };
 
 Handle.findCompleteProfiles = function(locations,done) {
-  Handle.knex
+  var query Handle.knex
     .select(Handle.selectColumns)
     .from(Handle.tableName)
     .whereNotNull('email')
@@ -184,18 +184,19 @@ Handle.findCompleteProfiles = function(locations,done) {
       locations.forEach(function(location) {
         _this.orWhere('location','like','%' + location + '%');
       });
-    })
-    .asCallback(function(err,rows) {
-      if (err) {
-        done(err);
-      } else if (rows) {
-        done(null,rows.map(function(row) {
-          return Handle.objectFromSQLRow(row);
-        }));
-      } else {
-        done();
-      }
     });
+  query.asCallback(function(err,rows) {
+    if (err) {
+      done(err);
+    } else if (rows) {
+      done(null,rows.map(function(row) {
+        return Handle.objectFromSQLRow(row);
+      }));
+    } else {
+      done();
+    }
+  });
+  return query;
 }
 
 Handle.objectFromSQLRow = function(sqlRow) {

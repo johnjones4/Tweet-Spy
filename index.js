@@ -25,14 +25,18 @@ async.series(
       console.trace(err);
       process.exit(-1);
     } else {
-      async.waterfall([
+      async.parallel([
         function(next) {
-          var crawler = new TwitterHandleCrawler(logger,config,config.twitter.rootHandles,'friends',0);
-          crawler.crawl(next);
-        },
-        function(next) {
-          var crawler = new TwitterHandleCrawler(logger,config,config.twitter.rootHandles,'followers',0);
-          crawler.crawl(next);
+          async.waterfall([
+            function(next1) {
+              var crawler = new TwitterHandleCrawler(logger,config,config.twitter.rootHandles,'friends',0);
+              crawler.crawl(next1);
+            },
+            function(next1) {
+              var crawler = new TwitterHandleCrawler(logger,config,config.twitter.rootHandles,'followers',0);
+              crawler.crawl(next1);
+            }
+          ],next);
         },
         function(next) {
           var crawler = new SiteEmailCrawler(logger,config);
