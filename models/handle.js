@@ -196,7 +196,7 @@ Handle.findCompleteProfiles = function(locations,done) {
       done();
     }
   });
-  return query;
+  return query.toString();
 }
 
 Handle.objectFromSQLRow = function(sqlRow) {
