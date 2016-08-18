@@ -1,4 +1,5 @@
 var async = require('async');
+var fs = require('fs');
 var config = require('./config');
 var Handle = require('./models/handle');
 var Page = require('./models/page');
