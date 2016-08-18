@@ -175,7 +175,7 @@ Handle.findUnprocessedHandles = function(type,done) {
 };
 
 Handle.findCompleteProfiles = function(locations,done) {
-  var query Handle.knex
+  var query = Handle.knex
     .select(Handle.selectColumns)
     .from(Handle.tableName)
     .whereNotNull('email')
