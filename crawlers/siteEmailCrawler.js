@@ -166,7 +166,7 @@ class SiteEmailCrawler {
           var linksElements = window.document.querySelectorAll('a');
           var pages = [];
           for(var i = 0; i < linksElements.length; i++) {
-            var link = url.parse(linksElements[0].href);
+            var link = url.parse(linksElements[i].href);
             if (link.host == pageURLObj.host) {
               pages.push(link.href);
             }
