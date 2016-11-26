@@ -1,10 +1,25 @@
 {
-  "db_file": "./database.sqlite3",
+  "knex": {
+    "client": "mysql",
+    "connection": {
+      "host": "",
+      "database": "",
+      "user": ""
+    }
+  },
   "twitter": {
     "consumerKey": "",
     "consumerSecret": "",
     "token": "",
     "tokenSecret": "",
-    "rootHandle": ""
+    "rootHandles": []
+  },
+  "verifyEmail": {
+    "username": "",
+    "password": ""
+  },
+  "report": {
+    "file": "./report.csv",
+    "locations": []
   }
 }
