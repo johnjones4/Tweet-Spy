@@ -12,7 +12,11 @@
     "consumerSecret": "",
     "token": "",
     "tokenSecret": "",
-    "rootHandles": []
+    "rootHandles": [],
+    "depths": {
+      "friends": 0,
+      "followers": 0
+    }
   },
   "verifyEmail": {
     "username": "",

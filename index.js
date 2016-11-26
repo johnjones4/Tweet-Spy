@@ -29,11 +29,11 @@ async.series(
         function(next) {
           async.waterfall([
             function(next1) {
-              var crawler = new TwitterHandleCrawler(logger,config,config.twitter.rootHandles,'friends',0);
+              var crawler = new TwitterHandleCrawler(logger,config,config.twitter.rootHandles,'friends',config.twitter.depths.friends);
               crawler.crawl(next1);
             },
             function(next1) {
-              var crawler = new TwitterHandleCrawler(logger,config,config.twitter.rootHandles,'followers',0);
+              var crawler = new TwitterHandleCrawler(logger,config,config.twitter.rootHandles,'followers',config.twitter.depths.followers);
               crawler.crawl(next1);
             }
           ],next);
