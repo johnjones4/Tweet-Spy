@@ -70,7 +70,7 @@ class Handle {
       'friends_processed': _this.friendsProcessed,
       'followers_depth': _this.followersDepth,
       'followers_processed': _this.followersProcessed,
-      'emailVerified': this.emailVerified,
+      'emailVerified': this.emailVerified || false,
       'dateEmailVerified': this.dateEmailVerified
     };
 

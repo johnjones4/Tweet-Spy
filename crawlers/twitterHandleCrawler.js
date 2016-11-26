@@ -34,7 +34,15 @@ class TwitterHandleCrawler {
         _this.beginDequeue(next);
       }
     ],function(err) {
-      done(err);
+      if (err) {
+        done(err);
+      } else if (_this.handleQueue.length == 0) {
+        done();
+      } else {
+        _this.handleQueue.empty(function() {
+          done();
+        });
+      }
     });
   }
 
