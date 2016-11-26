@@ -29,12 +29,20 @@ async.series(
         function(next) {
           async.waterfall([
             function(next1) {
-              var crawler = new TwitterHandleCrawler(logger,config,config.twitter.rootHandles,'friends',config.twitter.depths.friends);
-              crawler.crawl(next1);
+              if (config.twitter.depths.friends >= 0) {
+                var crawler = new TwitterHandleCrawler(logger,config,config.twitter.rootHandles,'friends',config.twitter.depths.friends);
+                crawler.crawl(next1);
+              } else {
+                next1();
+              }
             },
             function(next1) {
-              var crawler = new TwitterHandleCrawler(logger,config,config.twitter.rootHandles,'followers',config.twitter.depths.followers);
-              crawler.crawl(next1);
+              if (config.twitter.depths.followers >= 0) {
+                var crawler = new TwitterHandleCrawler(logger,config,config.twitter.rootHandles,'followers',config.twitter.depths.followers);
+                crawler.crawl(next1);
+              } else {
+                next1();
+              }
             }
           ],next);
         },
