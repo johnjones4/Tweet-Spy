@@ -5,7 +5,7 @@ var urlExpander = require('expand-url');
 class Handle {
   constructor(props) {
     var _this = this;
-    ['id','handle','twitterId','follows','followers','name','image','url','location','email','created','updated','friendsDepth','friendsProcessed','followersDepth','followersProcessed'].forEach(function(prop) {
+    ['id','handle','twitterId','follows','followers','name','image','url','location','email','created','updated','friendsDepth','friendsProcessed','followersDepth','followersProcessed','emailVerified','dateEmailVerified'].forEach(function(prop) {
       _this[prop] = props[prop] ? props[prop] : null;
     });
     if (!_this.created) {
@@ -69,7 +69,9 @@ class Handle {
       'friends_depth': _this.friendsDepth,
       'friends_processed': _this.friendsProcessed,
       'followers_depth': _this.followersDepth,
-      'followers_processed': _this.followersProcessed
+      'followers_processed': _this.followersProcessed,
+      'emailVerified': this.emailVerified,
+      'dateEmailVerified': this.dateEmailVerified
     };
 
     if (this.id) {
@@ -101,7 +103,7 @@ class Handle {
 
 Handle.tableName = 'handle';
 
-Handle.selectColumns = ['id','handle','twitter_id','follows','followers','name','image','url','location','email','created_at','updated_at','friends_depth','friends_processed','followers_depth','followers_processed'];
+Handle.selectColumns = ['id','handle','twitter_id','follows','followers','name','image','url','location','email','created_at','updated_at','friends_depth','friends_processed','followers_depth','followers_processed','emailVerified','dateEmailVerified'];
 
 Handle.findHandleByHandleName = function(handle,done) {
   Handle.knex
@@ -179,6 +181,9 @@ Handle.findCompleteProfiles = function(locations,done) {
     .select(Handle.selectColumns)
     .from(Handle.tableName)
     .whereNotNull('email')
+    .where({
+      'emailVerified': true
+    })
     .andWhere(function() {
       var _this = this;
       locations.forEach(function(location) {
@@ -199,6 +204,36 @@ Handle.findCompleteProfiles = function(locations,done) {
   return query.toString();
 }
 
+Handle.findUnverifiedProfiles = function(locations,done) {
+  var query = Handle.knex
+    .select(Handle.selectColumns)
+    .from(Handle.tableName)
+    .whereNotNull('email')
+    .andWhere({
+      'emailVerified': false
+    })
+    .andWhere(function() {
+      var _this = this;
+      locations.forEach(function(location) {
+        _this.orWhere('location','like','%' + location + '%');
+      });
+    })
+    .orderBy('dateEmailVerified')
+  query.asCallback(function(err,rows) {
+    if (err) {
+      done(err);
+    } else if (rows) {
+      done(null,rows.map(function(row) {
+        return Handle.objectFromSQLRow(row);
+      }));
+    } else {
+      done();
+    }
+  });
+  return query.toString();
+}
+
+
 Handle.objectFromSQLRow = function(sqlRow) {
   return new Handle({
     'id': sqlRow.id,
@@ -216,7 +251,9 @@ Handle.objectFromSQLRow = function(sqlRow) {
     'friendsDepth': sqlRow.friends_depth,
     'friendsProcessed': sqlRow.friends_processed,
     'followersDepth': sqlRow.followers_depth,
-    'followersProcessed': sqlRow.followers_processed
+    'followersProcessed': sqlRow.followers_processed,
+    'emailVerified': sqlRow.emailVerified,
+    'dateEmailVerified': sqlRow.dateEmailVerified
   });
 };
 
@@ -242,6 +279,8 @@ Handle.buildTable = function(done) {
         table.string('url',255);
         table.string('location',255);
         table.string('email',255);
+        table.boolean('emailVerified').defaultTo(false).notNullable()
+        table.datetime('dateEmailVerified')
         table.timestamps();
       }).asCallback(done);
     } else {
