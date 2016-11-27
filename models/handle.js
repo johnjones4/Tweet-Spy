@@ -33,6 +33,7 @@ class Handle {
       .select(Handle.selectColumns)
       .from(Handle.tableName)
       .where({'handle':this.handle})
+      .orWhere({'twitter_id':this.twitterId})
       .asCallback(function(err,rows) {
         done(err,(rows && rows.length > 0) ? Handle.objectFromSQLRow(rows[0]) : null);
       });
@@ -267,7 +268,7 @@ Handle.buildTable = function(done) {
       Handle.knex.schema.createTableIfNotExists(Handle.tableName, function(table) {
         table.increments('id').primary();
         table.string('handle',255).notNullable().unique().index();
-        table.integer('twitter_id').notNullable().unique().unsigned().index();
+        table.bigInteger('twitter_id').notNullable().unique().unsigned().index();
         table.integer('follows').unsigned();
         table.integer('followers').unsigned();
         table.integer('friends_depth').notNullable().unsigned();

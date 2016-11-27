@@ -26,7 +26,15 @@ class TwitterHandleCrawler {
             };
           }),
           function(err) {
-            next(err);
+            if (err) {
+              next(err);
+            } else if (_this.handleQueue.length == 0) {
+              next();
+            } else {
+              _this.handleQueue.empty = function() {
+                next();
+              };
+            }
           }
         )
       },
@@ -34,15 +42,7 @@ class TwitterHandleCrawler {
         _this.beginDequeue(next);
       }
     ],function(err) {
-      if (err) {
-        done(err);
-      } else if (_this.handleQueue.length == 0) {
-        done();
-      } else {
-        _this.handleQueue.empty(function() {
-          done();
-        });
-      }
+      done(err);
     });
   }
 
@@ -109,7 +109,7 @@ class TwitterHandleCrawler {
                 _this.logger.info(body);
                 setTimeout(function() {
                   makeRequest(cursor);
-                },900000);
+                },60000);
               }
             }
           });
